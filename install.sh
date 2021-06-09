@@ -1,7 +1,11 @@
 #!/bin/bash
-cd "${BASH_SOURCE%/*}";
+full_path="$(pwd)/${BASH_SOURCE}"
+dir_path="${full_path%/*}"
+source "$dir_path/config.sh"
 
 exit_command() {
+  unset $PASSWORD
+  unset $HISTIGNORE
   [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1;
 }
 
@@ -15,7 +19,7 @@ pre_install_prompts() {
 
   # prompt that config is setup
   read -p "Did you setup your details in the config.sh file? [Y/n]: " -n 1 REPLY
-
+  echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
     echo 'Exiting now'
@@ -23,49 +27,49 @@ pre_install_prompts() {
   fi
 
   # prompt git config
-  if [[ ! -z $git_user_name ]]
+  if [[ -z $git_user_name ]]
   then
     read -p 'git username: ' git_user_name
   fi
 
-  if [[ ! -z $git_user_email ]]
+  if [[ -z $git_user_email ]]
   then
     read -p 'git email: ' git_user_email
   fi
 
-  if [[ ! -z $git_credential_helper ]]
+  if [[ -z $git_credential_helper ]]
   then
     read -p 'git credential helper: ' git_credential_helper
   fi
 }
 
-auth_user() {
-  echo $PASSWORD | sudo -Sn true
-}
-
 pre_install() {
   # IGNORE SUDO COMMANDS TO PROTECT PASSWORD
-  export HISTIGNORE='*sudo -S*'
-
+  #export HISTIGNORE='*sudo -S*'
   # GET sudo password
-  read -p "sudo password: " -s PASSWORD
+  read -p "sudo password: " -s -r
+  export PASSWORD=$REPLY
+  echo
   # Reset user auth
   sudo -k
-  # Try to auth user
-  auth_user
-  # Get the results for auth sucess
-  auth_check="$(sudo -vn)"
-  if [[ ! -z $auth_check ]]
+
+  # Test user auth
+  if sudo -lS &>/dev/null <<< "$PASSWORD";
   then
+    echo 'Password accepted'
+  else
     echo 'Failed to authenticate'
     exit_command
   fi
+  sudo -k
+}
 
-  source config.sh
+auth_user() {
+  sudo -Sv <<< $PASSWORD
 }
 
 run_root() {
-  echo $PASSWORD | sudo -S  $*
+  echo $PASSWORD | sudo -S -k  $*
 }
 
 make_pacman() {
@@ -116,7 +120,7 @@ setup_bashrc() {
   curl https://raw.githubusercontent.com/anhsirk0/fetch-master-6000/master/fm6000.pl -o ./fm6000
   chmod +x fm6000
   mkdir -p $HOME/.local/bin
-  mv fm6000 $HOME/.local/bin/fm6000
+  echo yes | mv fm6000 $HOME/.local/bin/fm6000
 
   BASH_FILE_LOCATION="$HOME/.bashrc"
 
@@ -253,8 +257,6 @@ setup_ve() {
 }
 
 post_install() {
-  unset $PASSWORD
-  unset $HISTIGNORE
   source $HOME/.bashrc
   echo;echo "############################";echo;
   echo 'POST INSTALL STEPS:';echo;
@@ -262,19 +264,19 @@ post_install() {
   echo '1. Add your ssh key to github:';
   echo '    xclip -selection clipboard < $ssh_file.pub';echo;
 
-
+  exit_command
 }
 
 main() {
   pre_install_prompts
   pre_install
 
-  setup_linux
-  setup_paru
-  setup_git
+  #setup_linux
+  #setup_paru
+  #setup_git
   setup_bashrc
-  setup_fonts
-  setup_apps
+  #setup_fonts
+  #setup_apps
   setup_flutter
   setup_node
   setup_docker
