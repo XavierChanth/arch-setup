@@ -147,32 +147,39 @@ setup_bashrc() {
 
   # Add some useful aliases to bashrc
   echo $'
-    # LS ALIASES
-    alias ll=\'ls -alF\'
-    alias la=\'la -A\'
-    alias l=\'ls -CF\'
+# LS ALIASES
+alias ll=\'ls -alF\'
+alias la=\'la -A\'
+alias l=\'ls -CF\'
 
-    # FM 6000 SETTINGS
-    alias fm6000=\'fm6000 -m 8 -g 8 -l 21 -c magenta -s "bash $(echo $BASH_VERSION | cut -d- -f1)"\'
-    alias clear=\'clear && fm6000\'
+# FM 6000 SETTINGS
+alias fm6000=\'fm6000 -m 8 -g 8 -l 21 -c magenta -s "bash $(echo $BASH_VERSION | cut -d- -f1)"\'
+alias clear=\'clear && fm6000\'
 
-    # QUICK CALENDAR
-    alias jan=\'cal -m 01\'
-    alias feb=\'cal -m 02\'
-    alias mar=\'cal -m 03\'
-    alias apr=\'cal -m 04\'
-    alias may=\'cal -m 05\'
-    alias jun=\'cal -m 06\'
-    alias jul=\'cal -m 07\'
-    alias aug=\'cal -m 08\'
-    alias sep=\'cal -m 09\'
-    alias oct=\'cal -m 10\'
-    alias nov=\'cal -m 11\'
-    alias dec=\'cal -m 12\'
+# QUICK CALENDAR
+alias jan=\'cal -m 01\'
+alias feb=\'cal -m 02\'
+alias mar=\'cal -m 03\'
+alias apr=\'cal -m 04\'
+alias may=\'cal -m 05\'
+alias jun=\'cal -m 06\'
+alias jul=\'cal -m 07\'
+alias aug=\'cal -m 08\'
+alias sep=\'cal -m 09\'
+alias oct=\'cal -m 10\'
+alias nov=\'cal -m 11\'
+alias dec=\'cal -m 12\'
+color_prompt=
+if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    color_prompt=yes
+fi
 
-    echo -e "\\e[;35m                Welcome $USER\\n                $(date +\'%a %b %d %Y | %R\')$(fm6000)\\e[m\\n"
-
-  ' >> $BASH_FILE_LOCATION
+if [ "$color_prompt" = yes ]; then
+    PS1=\'\[$(tput bold)\]\\e[;35m\u\\e[m \\e[;34m[\\e[;36m\w\\e[;34m]\\e[m \\e[;35m>\\e[m \[$(tput sgr0)\]\'
+fi
+unset color_prompt
+echo -e "\\e[;35m                Welcome $USER\\n                $(date +\'%a %b %d %Y | %R\')$(fm6000)\\e[m\\n"
+' >> $BASH_FILE_LOCATION
 }
 
 setup_fonts() {
@@ -220,13 +227,13 @@ setup_flutter() {
 
   # bashrc
   echo -e "\n
-  export ANDROID_HOME=$HOME/.android
-  export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
-  export PATH=\$PATH:\$ANDROID_SDK_ROOT/platform-tools
-  export PATH=\$PATH:\$ANDROID_SDK_ROOT/emulator
-  export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools
-  export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools/bin
-  " >> "$HOME/.bashrc"
+export ANDROID_HOME=$HOME/.android
+export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
+export PATH=\$PATH:\$ANDROID_SDK_ROOT/platform-tools
+export PATH=\$PATH:\$ANDROID_SDK_ROOT/emulator
+export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools
+export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools/bin
+" >> "$HOME/.bashrc"
 
   yes | sdkmanager --licenses
   echo yes | sdkmanager --install $android_image
@@ -237,10 +244,10 @@ setup_node() {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 
   echo '
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  ' >> $HOME/.bashrc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+' >> $HOME/.bashrc
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
