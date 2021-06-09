@@ -118,7 +118,7 @@ setup_paru() {
 }
 
 setup_git() {
-  ssh_file_name="id_$ssh_keygen_type"
+  ssh_file_name="$HOME/.ssh/id_$ssh_keygen_type"
 
   # git global config -- make sure to set variables in config.sh
   git config --global user.name $git_user_name
