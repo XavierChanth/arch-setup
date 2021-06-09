@@ -1,0 +1,12 @@
+[Match]
+Name=lo
+
+[Network]
+
+[Address]
+Label=lo
+Address=10.64.64.64/32
+Address=127.0.0.1/8
+
+[Route]
+EOF
