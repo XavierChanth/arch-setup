@@ -244,20 +244,7 @@ setup_ve() {
   curl -L atsign.dev/curl/virtualenv-compose-vip.yaml -o $HOME/@ve/docker-compose.yaml;
   echo "docker-compose down && docker-compose pull && docker-compose up -d" > $HOME/@ve/update.sh;
 
-  run_root echo '
-[Match]
-Name=lo
-
-[Network]
-
-[Address]
-Label=lo
-Address=10.64.64.64/32
-Address=127.0.0.1/8
-
-[Route]
-EOF
-' > /etc/systemd/network/loopback-alias.network
+  run_root cp ve-loopback-alias.network /etc/systemd/network/loopback-alias.network
 
   run_root systemctl enable systemd-networkd.service
   run_root systemctl restart systemd-networkd.service
