@@ -29,17 +29,20 @@ pre_install_prompts() {
   # prompt git config
   if [[ -z $git_user_name ]]
   then
-    read -p 'git username: ' git_user_name
+    read -p 'git username: ' -r
+    export git_user_name=$REPLY
   fi
 
   if [[ -z $git_user_email ]]
   then
-    read -p 'git email: ' git_user_email
+    read -p 'git email: ' -r
+    export git_user_email=$REPLY
   fi
 
   if [[ -z $git_credential_helper ]]
   then
-    read -p 'git credential helper: ' git_credential_helper
+    read -p 'git credential helper: ' -r
+    export git_credential_helper=$REPLY
   fi
 }
 
