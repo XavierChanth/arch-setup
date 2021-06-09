@@ -103,14 +103,14 @@ make_aur() {
 }
 
 setup_linux() {
-  pacman -Syu
-  pacman -S --needed base-devel
-  pacman -S $packages
+  run_root pacman -Syu
+  run_root pacman -S --needed base-devel
+  run_root pacman -S --needed $packages
 }
 
 setup_paru() {
   # build paru from the aur
-  make_aur paru
+  make_aur paru.git
   # enable color in paru
   sudo sed -e ':a' -e 'N' -e '$!ba' -e 's/\n#Color\n/\nColor\n/g';
   # enable bottomup in paru
@@ -198,31 +198,25 @@ setup_flutter() {
   # Add JAVA_HOME AND PATH to bashrc
   echo -e '\nexport JAVA_HOME="/usr/lib/jvm/java-8-openjdk"\nexport PATH=$JAVA_HOME/bin:$PATH' >> $HOME/.bashrc
 
-  run_root rm -rf /opt/flutter
-  run_root rm -rf /opt/android-sdk
+  cd $HOME/.local/bin
+  git clone https://github.com/flutter/flutter.git -b stable
+  echo -e '\nexport PATH=$HOME/.local/bin/flutter/bin:$PATH' >> $HOME/.bashrc
+  cd $dir_path
 
-  flutter_packages="flutter android-sdk android-sdk-platform-tools android-sdk-build-tools"
-  for flutter_package in $flutter_packages
+  android_packages="android-sdk android-sdk-platform-tools android-sdk-build-tools"
+  for android_package in $android_packages
   do
-    make_aur $flutter_package
+    make_aur $android_package
   done
   make_aur "android-platform"
 
-  # permissions for flutter
-  run_root groupadd flutterusers
-  run_root gpasswd -a $USER flutterusers
-  run_root chown -R :flutterusers /opt/flutter
-  run_root chmod -R g+w /opt/flutter/
-
-  flutter upgrade
+  ANDROID_SDK_ROOT='/opt/android-sdk'
 
   # permissions for android-sdk
   run_root groupadd android-sdk
   run_root gpasswd -a $USER android-sdk
-  run_root setfacl -R -m g:android-sdk:rwx /opt/android-sdk
-  run_root setfacl -d -m g:android-sdk:rwx /opt/android-sdk
-
-  ANDROID_SDK_ROOT='/opt/android-sdk'
+  run_root chmod -R 777 $ANDROID_SDK_ROOT
+  run_root chown -R $USER:android-sdk $ANDROID_SDK_ROOT
 
   # bashrc
   echo -e "\n
@@ -234,8 +228,7 @@ setup_flutter() {
   export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools/bin
   " >> "$HOME/.bashrc"
 
-  sudo chown -R $(whoami) $ANDROID_SDK_ROOT
-
+  yes | sdkmanager --licenses
   echo yes | sdkmanager --install $android_image
   echo no | avdmanager create avd -n "my-avd" -k $android_image
 }
@@ -292,7 +285,7 @@ post_install() {
   echo '1. Add your ssh key to github:';
   echo '    xclip -selection clipboard < $ssh_file.pub';echo;
 
-  echo '2. Run flutter doctor'
+  echo '2. Run flutter doctor and flutter doctor --android-licenses'
 
   exit_command
 }
@@ -303,11 +296,11 @@ main() {
 
   #setup_linux
   #setup_paru
-  #setup_git
-  #setup_bashrc
-  #setup_fonts
-  #setup_apps
-  #setup_flutter
+  setup_git
+  setup_bashrc
+  setup_fonts
+  setup_apps
+  setup_flutter
   setup_node
   setup_docker
   setup_ve
