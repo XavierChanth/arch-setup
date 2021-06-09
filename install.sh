@@ -1,4 +1,6 @@
 #!/bin/bash
+# NOTE: THIS SCRIPT WILL REPLACE YOUR BASHRC WITH THE ORIGINAL
+
 full_path="$(pwd)/${BASH_SOURCE}"
 dir_path="${full_path%/*}"
 source "$dir_path/config.sh"
@@ -47,8 +49,16 @@ pre_install_prompts() {
 }
 
 pre_install() {
+  mkdir -p $HOME/.arch-setup-pkgs
+  FILE=$dir_path/bashrc.bak
+  if [ ! -f "$FILE" ]; then
+    cp $HOME/.bashrc $FILE
+  fi
+
+  echo y | cp /etc/skel/.bashrc $HOME
+
   # IGNORE SUDO COMMANDS TO PROTECT PASSWORD
-  #export HISTIGNORE='*sudo -S*'
+  export HISTIGNORE='*sudo -S*'
   # GET sudo password
   read -p "sudo password: " -s -r
   export PASSWORD=$REPLY
@@ -72,21 +82,24 @@ auth_user() {
 }
 
 run_root() {
-  echo $PASSWORD | sudo -S -k  $*
+  echo $PASSWORD | sudo -S $*
 }
 
 make_pacman() {
   auth_user
-  echo yes | pacman -S $*
+  echo yes | sudo pacman -S $*
 }
 
 make_aur() {
   auth_user
+  cd $HOME/.arch-setup-pkgs
+  run_root rm -rf $1
   git clone "https://aur.archlinux.org/$1"
   cd $1
-  makepkg -si
+  echo yes | makepkg -si
   cd ..
-  rm -r $1
+  run_root rm -rf $1
+  cd $dir_path
 }
 
 setup_linux() {
@@ -185,6 +198,9 @@ setup_flutter() {
   # Add JAVA_HOME AND PATH to bashrc
   echo -e '\nexport JAVA_HOME="/usr/lib/jvm/java-8-openjdk"\nexport PATH=$JAVA_HOME/bin:$PATH' >> $HOME/.bashrc
 
+  run_root rm -rf /opt/flutter
+  run_root rm -rf /opt/android-sdk
+
   flutter_packages="flutter android-sdk android-sdk-platform-tools android-sdk-build-tools"
   for flutter_package in $flutter_packages
   do
@@ -227,23 +243,31 @@ setup_flutter() {
 setup_node() {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 
+  echo '
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+  ' >> $HOME/.bashrc
+
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
   nvm install --lts
   nvm use --lts
 
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   packages="yarn eslint typescript"
-
-  source $HOME/.nvm/nvm.sh
   npm i -g $packages
 }
 
 setup_docker() {
   make_pacman docker docker-compose
 
-  root_run systemctl start docker.service
-  root_run systemctl enable docker.service
+  run_root systemctl start docker.service
+  run_root systemctl enable docker.service
 
-  root_run groupadd docker
-  root_run gpasswd -a $USER docker
+  run_root groupadd docker
+  run_root gpasswd -a $USER docker
 }
 
 setup_ve() {
@@ -251,12 +275,13 @@ setup_ve() {
   curl -L atsign.dev/curl/virtualenv-compose-vip.yaml -o $HOME/@ve/docker-compose.yaml;
   echo "docker-compose down && docker-compose pull && docker-compose up -d" > $HOME/@ve/update.sh;
 
-  run_root cp ve-loopback-alias.network /etc/systemd/network/loopback-alias.network
+  run_root cp $dir_path/ve-loopback-alias.network /etc/systemd/network/loopback-alias.network
 
   run_root systemctl enable systemd-networkd.service
   run_root systemctl restart systemd-networkd.service
-
-  docker-compose up -f $HOME/@ve -d
+  cd $HOME/@ve
+  docker-compose up -d
+  cd $dir_path
 }
 
 post_install() {
@@ -266,6 +291,8 @@ post_install() {
 
   echo '1. Add your ssh key to github:';
   echo '    xclip -selection clipboard < $ssh_file.pub';echo;
+
+  echo '2. Run flutter doctor'
 
   exit_command
 }
@@ -277,10 +304,10 @@ main() {
   #setup_linux
   #setup_paru
   #setup_git
-  setup_bashrc
+  #setup_bashrc
   #setup_fonts
   #setup_apps
-  setup_flutter
+  #setup_flutter
   setup_node
   setup_docker
   setup_ve
