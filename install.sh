@@ -21,6 +21,22 @@ pre_install_prompts() {
     echo 'Exiting now'
     exit_command
   fi
+
+  # prompt git config
+  if [[ ! -z $git_user_name ]]
+  then
+    read -p 'git username: ' git_user_name
+  fi
+
+  if [[ ! -z $git_user_email ]]
+  then
+    read -p 'git email: ' git_user_email
+  fi
+
+  if [[ ! -z $git_credential_helper ]]
+  then
+    read -p 'git credential helper: ' git_credential_helper
+  fi
 }
 
 auth_user() {
@@ -281,4 +297,4 @@ main() {
 }
 
 # start the main function
-main $*
+main
