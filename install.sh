@@ -125,10 +125,20 @@ setup_git() {
   git config --global user.email $git_user_email
   git config --global credential.helper $git_credential_helper
 
+#pretty log statements
+  echo "
+[alias]
+lg1 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+lg2 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)%n''          %C(white)%s%C(reset) %C(dim white)- %an%C(reset)' --all
+lg = !\"git lg1\"
+" >> $HOME/.gitconfig
+
   # add git key to the ssh agent
   echo $ssh_file_name | ssh-keygen -t $ssh_keygen_type -C "$git_user_email"
   eval "$(ssh-agent -s)"
   ssh-add $ssh_file_name
+  
+
 }
 
 setup_bashrc() {
