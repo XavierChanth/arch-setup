@@ -150,8 +150,9 @@ setup_bashrc() {
 
   # Change the default PS1 color prompt
   PS1_color_pattern="PS1='\\[\\.*\$"
-  PS1_color_prompt="PS1='\\[\$(tput bold)\\]\\e[;35m\\u\\e[m \\e[;34m[\\e[;36m\\w\\e[;34m]\\e[m \\e[;35m>\\e[m \\[\$(tput sgr0)\\]'"
-  sed -i "s/$PS1_color_pattern/$PS1_color_prompt/g" $BASH_FILE_LOCATION
+  PS1_color_prompt="PS1='\\[$(tput bold)\\e[;35m\\]\\u\\[\\e[m\\e[;34m[\\e[;36m\\]\\w\[\\e[;34m]\\e[m\\] \\[\\e[;35m>\\e[m\\] \\[$(tput sgr0)\\]'"
+
+  #sed -i "s/$PS1_color_pattern/$PS1_color_prompt/g" $BASH_FILE_LOCATION
 
   # Add some useful aliases to bashrc
   echo $'
@@ -183,7 +184,7 @@ if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
 fi
 
 if [ "$color_prompt" = yes ]; then
-    PS1=\'\[$(tput bold)\]\\e[;35m\u\\e[m \\e[;34m[\\e[;36m\w\\e[;34m]\\e[m \\e[;35m>\\e[m \[$(tput sgr0)\]\'
+    PS1=\'\\[$(tput bold)\\e[;35m\\]\\u\\[\\e[m\\e[;34m[\\e[;36m\\]\\w\[\\e[;34m]\\e[m\\] \\[\\e[;35m>\\e[m\\] \\[$(tput sgr0)\\]\'
 fi
 unset color_prompt
 echo -e "\\e[;35m                Welcome $USER\\n                $(date +\'%a %b %d %Y | %R\')$(fm6000)\\e[m\\n"
@@ -239,7 +240,6 @@ export ANDROID_HOME=$HOME/.android
 export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
 export PATH=\$PATH:\$ANDROID_SDK_ROOT/platform-tools
 export PATH=\$PATH:\$ANDROID_SDK_ROOT/emulator
-export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools
 export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools/bin
 " >> "$HOME/.bashrc"
 
