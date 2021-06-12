@@ -1,5 +1,5 @@
 #!/bin/bash
-packages="git curl xclip xdg-utils zip unzip" # ONLY PACMAN PACKAGES ALLOWED
+packages="git curl xclip xdg-utils zip unzip htop" # ONLY PACMAN PACKAGES ALLOWED
 git_user_name=""
 git_user_email=""
 git_credential_helper=""
