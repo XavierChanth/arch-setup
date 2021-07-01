@@ -9,3 +9,7 @@ aur_fonts="ttf-ms-fonts"
 arch_apps="wireshark-qt vivaldi vivaldi-ffmpeg-codecs firefox"
 aur_apps="visual-studio-code-bin"
 android_image="system-images;android-30;google_apis;x86"
+additional_bashrc="
+  export PATH=$PATH:/opt/google/chrome
+  export QT_SCALE_FACTOR=0.5
+"

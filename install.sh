@@ -6,8 +6,8 @@ dir_path="${full_path%/*}"
 source "$dir_path/config.sh"
 
 exit_command() {
-  unset $PASSWORD
-  unset $HISTIGNORE
+  unset "$PASSWORD"
+  unset "$HISTIGNORE"
   [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1;
 }
 
@@ -49,13 +49,13 @@ pre_install_prompts() {
 }
 
 pre_install() {
-  mkdir -p $HOME/.arch-setup-pkgs
+  mkdir -p "$HOME/.arch-setup-pkgs"
   FILE=$dir_path/bashrc.bak
   if [ ! -f "$FILE" ]; then
-    cp $HOME/.bashrc $FILE
+    cp "$HOME/.bashrc" "$FILE"
   fi
 
-  echo y | cp /etc/skel/.bashrc $HOME
+  cp /etc/skel/.bashrc "$HOME"
 
   # IGNORE SUDO COMMANDS TO PROTECT PASSWORD
   export HISTIGNORE='*sudo -S*'
@@ -78,52 +78,52 @@ pre_install() {
 }
 
 auth_user() {
-  sudo -Sv <<< $PASSWORD
+  sudo -Sv <<< "$PASSWORD"
 }
 
 run_root() {
-  echo $PASSWORD | sudo -S $*
+  echo "$PASSWORD" | sudo -S "$*"
 }
 
 make_pacman() {
   auth_user
-  echo yes | sudo pacman -S $*
+  echo yes | sudo pacman -S "$*"
 }
 
 make_aur() {
   auth_user
-  cd $HOME/.arch-setup-pkgs
-  run_root rm -rf $1
+  cd "$HOME"/.arch-setup-pkgs || return 1
+  run_root rm -rf "$1"
   git clone "https://aur.archlinux.org/$1"
-  cd $1
+  cd "$1" || return 1
   echo yes | makepkg -si
-  cd ..
-  run_root rm -rf $1
-  cd $dir_path
+  cd .. || return
+  run_root rm -rf "$1"
+  cd "$dir_path" || return 1
 }
 
 setup_linux() {
   run_root pacman -Syu
   run_root pacman -S --needed base-devel
-  run_root pacman -S --needed $packages
+  run_root pacman -S --needed "$packages"
 }
 
 setup_paru() {
   # build paru from the aur
   make_aur paru.git
   # enable color in paru
-  sudo sed -e ':a' -e 'N' -e '$!ba' -e 's/\n#Color\n/\nColor\n/g';
+  sudo sed -e ':a' -e 'N' -e '$!ba' -e 's/\n#Color\n/\nColor\n/g' /etc/paru.conf;
   # enable bottomup in paru
-  sudo sed -e ':a' -e 'N' -e '$!ba' -e 's/\n#BottomUp\n/\nBottomUp\n/g';
+  #sudo sed -e ':a' -e 'N' -e '$!ba' -e 's/\n#BottomUp\n/\nBottomUp\n/g' /etc/paru.conf;
 }
 
 setup_git() {
   ssh_file_name="$HOME/.ssh/id_$ssh_keygen_type"
 
   # git global config -- make sure to set variables in config.sh
-  git config --global user.name $git_user_name
-  git config --global user.email $git_user_email
-  git config --global credential.helper $git_credential_helper
+  git config --global user.name "$git_user_name"
+  git config --global user.email "$git_user_email"
+  git config --global credential.helper "$git_credential_helper"
   #pretty log statements
   git config --global alias.lg "lg1"
   git config --global alias.lg1 "lg1-specific --all"
@@ -134,17 +134,17 @@ setup_git() {
   git config --global alias.lg3-specific "log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(reset) %C(bold green)(%ar)%C(reset) %C(bold cyan)(committed: %cD)%C(reset) %C(auto)%d%C(reset)%n''          %C(white)%s%C(reset)%n''          %C(dim white)- %an <%ae> %C(reset) %C(dim white)(committer: %cn <%ce>)%C(reset)'"
 
   # add git key to the ssh agent
-  echo $ssh_file_name | ssh-keygen -t $ssh_keygen_type -C "$git_user_email"
+  echo "$ssh_file_name" | ssh-keygen -t "$ssh_keygen_type" -C "$git_user_email"
   eval "$(ssh-agent -s)"
-  ssh-add $ssh_file_name
+  ssh-add "$ssh_file_name"
 }
 
 setup_bashrc() {
   # Add Fetchmaster6000
   curl https://raw.githubusercontent.com/anhsirk0/fetch-master-6000/master/fm6000.pl -o ./fm6000
   chmod +x fm6000
-  mkdir -p $HOME/.local/bin
-  echo yes | mv fm6000 $HOME/.local/bin/fm6000
+  mkdir -p "$HOME/.local/bin"
+  mv fm6000 "$HOME/.local/bin/fm6000"
 
   BASH_FILE_LOCATION="$HOME/.bashrc"
 
@@ -188,24 +188,26 @@ if [ "$color_prompt" = yes ]; then
 fi
 unset color_prompt
 echo -e "\\e[;35m                Welcome $USER\\n                $(date +\'%a %b %d %Y | %R\')$(fm6000)\\e[m\\n"
-' >> $BASH_FILE_LOCATION
+' >> "$BASH_FILE_LOCATION"
+
+echo "$additional_bashrc" >> "$BASH_FILE_LOCATION"
 }
 
 setup_fonts() {
-  make_pacman $arch_fonts
-  font_packages=$(echo $aur_fonts | tr ";" "\n")
-  for font_package in $font_package
+  make_pacman "$arch_fonts"
+  font_packages=$(echo "$aur_fonts" | tr ";" "\n")
+  for font_package in $font_packages
   do
-    make_aur $font_package
+    make_aur "$font_package"
   done
 }
 
 setup_apps() {
-  make_pacman $arch_apps
-  app_packages=$(echo $aur_apps | tr ";" "\n")
+  make_pacman "$arch_apps"
+  app_packages=$(echo "$aur_apps" | tr ";" "\n")
   for app_package in $app_packages
   do
-    make_aur $app_package
+    make_aur "$app_package"
   done
 }
 
@@ -214,15 +216,15 @@ setup_flutter() {
   # Add JAVA_HOME AND PATH to bashrc
   echo -e '\nexport JAVA_HOME="/usr/lib/jvm/java-8-openjdk"\nexport PATH=$JAVA_HOME/bin:$PATH' >> $HOME/.bashrc
 
-  cd $HOME/.local/bin
+  cd "$HOME/.local/bin" || return 1
   git clone https://github.com/flutter/flutter.git -b stable
-  echo -e '\nexport PATH=$HOME/.local/bin/flutter/bin:$PATH' >> $HOME/.bashrc
-  cd $dir_path
+  echo -e '\nexport PATH=$HOME/.local/bin/flutter/bin:$PATH' >> "$HOME/.bashrc"
+  cd "$dir_path" || return 1
 
   android_packages="android-sdk android-sdk-platform-tools android-sdk-build-tools"
   for android_package in $android_packages
   do
-    make_aur $android_package
+    make_aur "$android_package"
   done
   make_aur "android-platform"
 
@@ -230,9 +232,9 @@ setup_flutter() {
 
   # permissions for android-sdk
   run_root groupadd android-sdk
-  run_root gpasswd -a $USER android-sdk
+  run_root gpasswd -a "$USER" android-sdk
   run_root chmod -R 777 $ANDROID_SDK_ROOT
-  run_root chown -R $USER:android-sdk $ANDROID_SDK_ROOT
+  run_root chown -R "$USER":android-sdk $ANDROID_SDK_ROOT
 
   # bashrc
   echo -e "\n
@@ -244,8 +246,8 @@ export PATH=\$PATH:\$ANDROID_SDK_ROOT/tools/bin
 " >> "$HOME/.bashrc"
 
   yes | sdkmanager --licenses
-  echo yes | sdkmanager --install $android_image
-  echo no | avdmanager create avd -n "my-avd" -k $android_image
+  echo yes | sdkmanager --install "$android_image"
+  echo no | avdmanager create avd -n "my-avd" -k "$android_image"
 }
 
 setup_node() {
@@ -255,7 +257,7 @@ setup_node() {
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-' >> $HOME/.bashrc
+' >> "$HOME/.bashrc"
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -265,7 +267,7 @@ export NVM_DIR="$HOME/.nvm"
 
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   packages="yarn eslint typescript"
-  npm i -g $packages
+  npm i -g "$packages"
 }
 
 setup_docker() {
@@ -275,25 +277,25 @@ setup_docker() {
   run_root systemctl enable docker.service
 
   run_root groupadd docker
-  run_root gpasswd -a $USER docker
+  run_root gpasswd -a "$USER" docker
 }
 
 setup_ve() {
-  mkdir -p $HOME/@ve
-  curl -L atsign.dev/curl/virtualenv-compose-vip.yaml -o $HOME/@ve/docker-compose.yaml;
-  echo "docker-compose down && docker-compose pull && docker-compose up -d" > $HOME/@ve/update.sh;
+  mkdir -p "$HOME/@ve"
+  curl -L atsign.dev/curl/virtualenv-compose-vip.yaml -o "$HOME/@ve/docker-compose.yaml";
+  echo "docker-compose down && docker-compose pull && docker-compose up -d" > "$HOME/@ve/update.sh";
 
-  run_root cp $dir_path/ve-loopback-alias.network /etc/systemd/network/loopback-alias.network
+  run_root cp "$dir_path/ve-loopback-alias.network" /etc/systemd/network/loopback-alias.network
 
   run_root systemctl enable systemd-networkd.service
   run_root systemctl restart systemd-networkd.service
-  cd $HOME/@ve
+  cd "$HOME/@ve" || return 1
   docker-compose up -d
-  cd $dir_path
+  cd "$dir_path" || return 1
 }
 
 post_install() {
-  source $HOME/.bashrc
+  source "$HOME/.bashrc"
   echo;echo "############################";echo;
   echo 'POST INSTALL STEPS:';echo;
 
